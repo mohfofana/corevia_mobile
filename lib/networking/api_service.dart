@@ -8,8 +8,20 @@ import 'routes/auth_routes.dart';
 
 class ApiService {
   static final String baseUrl = _resolveBaseUrl();
-  static final http.Client _client = createHttpClient();
+  static http.Client _client = createHttpClient();
   static final String? hostHeader = _resolveHostHeader();
+
+  /// Test seam: lets unit tests substitute an [http.MockClient] instead of
+  /// hitting the network. Never call this from production code.
+  @visibleForTesting
+  static void debugOverrideClient(http.Client client) {
+    _client = client;
+  }
+
+  @visibleForTesting
+  static void debugResetClient() {
+    _client = createHttpClient();
+  }
 
   static String _resolveBaseUrl() {
     final defaultUrl = dotenv.env['API_BASE_URL'] ?? 'https://api.corevia.local';
