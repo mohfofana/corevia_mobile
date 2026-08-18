@@ -10,6 +10,9 @@ void main() {
     final router = createRouter(onboardingNotifier, authNotifier);
 
     await tester.pumpWidget(MyApp(router: router));
-    await tester.pumpAndSettle();
+    // The onboarding screen runs a repeating AnimationController, so
+    // pumpAndSettle() never settles here — pump a few frames instead.
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
   });
 }
