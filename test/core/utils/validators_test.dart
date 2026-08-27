@@ -6,18 +6,18 @@ void main() {
     test('returns error when null or empty', () {
       expect(
         Validators.validateEmail(null),
-        'Veuillez entrer votre adresse email',
+        'Please enter your email address',
       );
       expect(
         Validators.validateEmail('   '),
-        'Veuillez entrer votre adresse email',
+        'Please enter your email address',
       );
     });
 
     test('returns error for invalid email', () {
       expect(
         Validators.validateEmail('invalid-email'),
-        'Veuillez entrer une adresse email valide',
+        'Please enter a valid email address',
       );
     });
 
@@ -30,7 +30,7 @@ void main() {
     test('enforces min length', () {
       expect(
         Validators.validateUsername('a'),
-        "Nom d'utilisateur doit contenir au moins 2 caracteres",
+        'Username must contain at least 2 characters',
       );
     });
 
@@ -43,22 +43,22 @@ void main() {
     test('enforces basic length constraints', () {
       expect(
         Validators.validatePassword('123'),
-        'Le mot de passe doit contenir au moins 8 caracteres',
+        'Password must be between 8 and 100 characters long',
       );
     });
 
     test('enforces strong rules when required', () {
       expect(
         Validators.validatePassword('abcdefgh', requireStrongRules: true),
-        'Le mot de passe doit contenir au moins une majuscule',
+        'Password must contain at least one uppercase letter',
       );
       expect(
         Validators.validatePassword('Abcdefgh', requireStrongRules: true),
-        'Le mot de passe doit contenir au moins un chiffre',
+        'Password must contain at least one digit',
       );
       expect(
         Validators.validatePassword('Abcdefg1', requireStrongRules: true),
-        'Le mot de passe doit contenir au moins un caractere special',
+        'Password must contain at least one special character',
       );
     });
 

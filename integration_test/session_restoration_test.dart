@@ -25,7 +25,7 @@ void main() {
       await tester.pumpWidget(app.widget);
       await tester.pumpAndSettle();
 
-      expect(find.text('Medication Plan'), findsOneWidget);
+      expect(find.text('Plan de médicaments'), findsOneWidget);
       // Never redirected through /login or /onboarding.
       expect(find.text('Se connecter'), findsNothing);
       expect(find.text('Commencer'), findsNothing);

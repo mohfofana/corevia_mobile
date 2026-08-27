@@ -63,6 +63,9 @@ TestApp buildTestApp({
       ChangeNotifierProvider(create: (_) => UserProvider(userRepository ?? FakeUserRepository())),
       ChangeNotifierProvider<OnboardingNotifier>.value(value: onboardingNotifier),
       ChangeNotifierProvider<AuthNotifier>.value(value: authNotifier),
+      ChangeNotifierProvider<LocaleNotifier>.value(
+        value: LocaleNotifier(const Locale('fr')),
+      ),
     ],
     child: MyApp(router: router),
   );

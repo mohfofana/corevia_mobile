@@ -64,10 +64,10 @@ void main() {
   });
 
   group('updateUser', () {
-    test('PUTs and parses the updated user', () async {
+    test('PATCHes and parses the updated user', () async {
       ApiService.debugOverrideClient(
         MockClient((request) async {
-          expect(request.method, 'PUT');
+          expect(request.method, 'PATCH');
           expect(request.url.path, '/api/me');
           return http.Response(jsonEncode({'user': {'id': '1', 'name': 'Janet', 'email': 'jane@doe.com'}}), 200);
         }),

@@ -61,7 +61,7 @@ void main() {
 
     final data = await repository.getHomeData();
 
-    expect(data.userName, 'Utilisateur');
+    expect(data.userName, 'User');
     expect(data.alertsCount, 0);
     expect(data.medicationAdherenceRate, 0);
   });
@@ -73,6 +73,6 @@ void main() {
 
     final data = await repository.getHomeData();
 
-    expect(data.userName, 'Utilisateur');
+    expect(data.userName, 'User');
   });
 }
