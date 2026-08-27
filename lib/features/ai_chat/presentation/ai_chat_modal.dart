@@ -1,10 +1,11 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 
-import '../data/rag_chat_storage.dart';
-import '../data/rag_socket_chat_service.dart';
-import '../data/rag_socket_config.dart';
+import '../../pillbox/presentation/providers/pillbox_provider.dart';
+import '../data/ai_chat_service.dart';
 import '../domain/chat_message.dart';
-import '../domain/rag_agent.dart';
 import 'widgets/chat_bubble.dart';
 
 class AiChatModal extends StatefulWidget {
@@ -18,26 +19,17 @@ class _AiChatModalState extends State<AiChatModal> {
   final List<ChatMessage> _messages = [];
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final RagChatStorage _storage = RagChatStorage();
+  final AiChatService _chatService = AiChatService();
 
   bool _isStreaming = false;
-  bool _isConnected = false;
-  String _selectedAgentId = RagAgents.medecinGeneraliste.id;
-  String? _userId;
-
-  RagSocketChatService? _socket;
-
-  @override
-  void initState() {
-    super.initState();
-    _init();
-  }
+  CancelToken? _activeCancelToken;
 
   @override
   void dispose() {
-    _socket?.dispose();
+    _activeCancelToken?.cancel();
     _inputController.dispose();
     _scrollController.dispose();
+    _chatService.dispose();
     super.dispose();
   }
 
@@ -53,34 +45,7 @@ class _AiChatModalState extends State<AiChatModal> {
     });
   }
 
-  Future<void> _init() async {
-    final agentId = await _storage.getSelectedAgentId();
-    final history = await _storage.loadUserHistory(agentId);
-    final userId = await _storage.getOrCreateUserId();
-
-    if (!mounted) return;
-    setState(() {
-      _selectedAgentId = agentId;
-      _userId = userId;
-      _messages
-        ..clear()
-        ..addAll(history);
-    });
-
-    _connect();
-  }
-
-  void _connect() {
-    _socket ??= RagSocketChatService(url: RagSocketConfig.resolveUrl());
-    _socket!.connect(onConnectionChanged: (connected) {
-      if (!mounted) return;
-      setState(() {
-        _isConnected = connected;
-      });
-    });
-  }
-
-  Future<void> _sendMessage() async {
+  void _sendMessage() {
     final text = _inputController.text.trim();
     if (text.isEmpty || _isStreaming) return;
 
@@ -92,13 +57,11 @@ class _AiChatModalState extends State<AiChatModal> {
       _messages.add(userMessage);
     });
 
-    await _storage.appendUserMessage(_selectedAgentId, userMessage);
-    _scrollToBottom();
-
-    await _streamResponse(query: text);
+    _streamResponse();
   }
 
-  Future<void> _streamResponse({required String query}) async {
+  /// Starts a streaming request to /chat with the current messages.
+  void _streamResponse() {
     final assistantMessage = ChatMessage(role: ChatRole.assistant, content: '');
 
     setState(() {
@@ -108,15 +71,8 @@ class _AiChatModalState extends State<AiChatModal> {
 
     _scrollToBottom();
 
-    _connect();
-
-    _userId ??= await _storage.getOrCreateUserId();
-    final userId = _userId!;
-
-    await _socket!.sendQuery(
-      agentId: _selectedAgentId,
-      query: query,
-      userId: userId,
+    _activeCancelToken = _chatService.streamChat(
+      messages: _messages.where((m) => !m.isError && (m.content.isNotEmpty || m.toolCalls.isNotEmpty)).toList(),
       onDelta: (delta) {
         if (!mounted) return;
         setState(() {
@@ -124,20 +80,24 @@ class _AiChatModalState extends State<AiChatModal> {
         });
         _scrollToBottom();
       },
+      onToolCall: (toolCall) {
+        if (!mounted) return;
+        setState(() {
+          assistantMessage.toolCalls.add(toolCall);
+        });
+        _scrollToBottom();
+      },
       onError: (error) {
         if (!mounted) return;
         setState(() {
-          if (_messages.contains(assistantMessage)) {
-            if (assistantMessage.content.isEmpty) {
-              _messages.remove(assistantMessage);
-              _messages.add(ChatMessage(
-                role: ChatRole.assistant,
-                content: error,
-                isError: true,
-              ));
-            }
+          if (assistantMessage.content.isEmpty && assistantMessage.toolCalls.isEmpty) {
+            _messages.remove(assistantMessage);
+            _messages.add(ChatMessage(
+              role: ChatRole.assistant,
+              content: error,
+              isError: true,
+            ));
           }
-          _isStreaming = false;
         });
         _scrollToBottom();
       },
@@ -145,7 +105,10 @@ class _AiChatModalState extends State<AiChatModal> {
         if (!mounted) return;
         setState(() {
           _isStreaming = false;
-          if (assistantMessage.content.isEmpty && _messages.contains(assistantMessage)) {
+          _activeCancelToken = null;
+          if (assistantMessage.content.isEmpty &&
+              assistantMessage.toolCalls.isEmpty &&
+              _messages.contains(assistantMessage)) {
             _messages.remove(assistantMessage);
           }
         });
@@ -153,61 +116,78 @@ class _AiChatModalState extends State<AiChatModal> {
     );
   }
 
+  void _approveToolCall(ToolCallInfo toolCall) {
+    setState(() {
+      toolCall.state = ToolCallState.approved;
+    });
+
+    _refreshProviders(toolCall.toolName);
+    _resendIfAllResponded();
+  }
+
+  void _rejectToolCall(ToolCallInfo toolCall) {
+    setState(() {
+      toolCall.state = ToolCallState.rejected;
+    });
+
+    _resendIfAllResponded();
+  }
+
+  void _approveAllToolCalls() {
+    setState(() {
+      for (final msg in _messages) {
+        for (final tc in msg.toolCalls) {
+          if (tc.state == ToolCallState.pending) {
+            tc.state = ToolCallState.approved;
+            _refreshProviders(tc.toolName);
+          }
+        }
+      }
+    });
+    _resendIfAllResponded();
+  }
+
+  void _rejectAllToolCalls() {
+    setState(() {
+      for (final msg in _messages) {
+        for (final tc in msg.toolCalls) {
+          if (tc.state == ToolCallState.pending) {
+            tc.state = ToolCallState.rejected;
+          }
+        }
+      }
+    });
+    _resendIfAllResponded();
+  }
+
+  /// Only re-send when ALL pending tool calls have been responded to.
+  void _resendIfAllResponded() {
+    final hasPending = _messages.any((m) => m.hasPendingToolCalls);
+    if (!hasPending) {
+      _streamResponse();
+    }
+  }
+
+  void _refreshProviders(String toolName) {
+    final providerType = ToolCallInfo.refreshProviders[toolName];
+    if (providerType == null) return;
+
+    switch (providerType) {
+      case 'pillbox':
+        try {
+          final pillbox = context.read<PillboxProvider>();
+          pillbox.loadTodayIntakes();
+          pillbox.loadMedications();
+        } catch (_) {}
+        break;
+    }
+  }
+
   void _stopStreaming() {
-    _socket?.disconnect();
+    _activeCancelToken?.cancel();
     setState(() {
       _isStreaming = false;
-    });
-  }
-
-  Future<void> _selectAgent(String agentId) async {
-    if (agentId == _selectedAgentId) return;
-
-    _stopStreaming();
-
-    await _storage.setSelectedAgentId(agentId);
-    final history = await _storage.loadUserHistory(agentId);
-
-    if (!mounted) return;
-    setState(() {
-      _selectedAgentId = agentId;
-      _messages
-        ..clear()
-        ..addAll(history);
-    });
-  }
-
-  Future<void> _clearHistory() async {
-    final shouldClear = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Effacer l’historique ?'),
-        content: const Text(
-          'Cela supprimera les questions enregistrées localement et réinitialisera votre identifiant de chat.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Effacer'),
-          ),
-        ],
-      ),
-    );
-
-    if (shouldClear != true) return;
-
-    _stopStreaming();
-    await _storage.clearUserHistory(_selectedAgentId);
-    await _storage.resetUserId();
-
-    if (!mounted) return;
-    setState(() {
-      _userId = null;
-      _messages.clear();
+      _activeCancelToken = null;
     });
   }
 
@@ -248,13 +228,6 @@ class _AiChatModalState extends State<AiChatModal> {
   }
 
   Widget _buildHeader() {
-    final agent = RagAgents.byId(_selectedAgentId);
-    final status = _isStreaming
-        ? 'En train d\'écrire...'
-        : _isConnected
-            ? 'En ligne'
-            : 'Connexion...';
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -278,64 +251,25 @@ class _AiChatModalState extends State<AiChatModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'DocAI Assistant',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1D1D1F),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: agent.id,
-                        items: RagAgents.all
-                            .map((a) => DropdownMenuItem<String>(
-                                  value: a.id,
-                                  child: Text(a.label),
-                                ))
-                            .toList(),
-                        onChanged: _isStreaming ? null : (v) => _selectAgent(v ?? agent.id),
-                      ),
-                    ),
-                  ],
-                ),
                 Text(
-                  status,
+                  context.l10n.docAiAssistant,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: _isStreaming
-                        ? const Color(0xFF34C759)
-                        : Colors.grey.shade500,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1D1D1F),
                   ),
                 ),
                 Text(
-                  'Les réponses IA ne sont pas enregistrées.',
+                  _isStreaming ? context.l10n.writingStatus : context.l10n.online,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 13,
+                    color: _isStreaming ? const Color(0xFF34C759) : Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: _isStreaming ? null : _clearHistory,
-            icon: Icon(Icons.delete_outline_rounded, color: Colors.grey.shade700),
-            style: IconButton.styleFrom(
-              backgroundColor: const Color(0xFFF5F5F7),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-          const SizedBox(width: 8),
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close_rounded, color: Color(0xFF1D1D1F)),
@@ -358,7 +292,7 @@ class _AiChatModalState extends State<AiChatModal> {
             Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Colors.grey.shade300),
             const SizedBox(height: 12),
             Text(
-              'Posez votre question à ${RagAgents.byId(_selectedAgentId).label}',
+              context.l10n.askDocAi,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey.shade500,
@@ -370,6 +304,10 @@ class _AiChatModalState extends State<AiChatModal> {
       );
     }
 
+    final pendingCount = _messages.fold<int>(
+      0, (sum, m) => sum + m.toolCalls.where((tc) => tc.state == ToolCallState.pending).length,
+    );
+
     return Column(
       children: [
         Expanded(
@@ -377,9 +315,68 @@ class _AiChatModalState extends State<AiChatModal> {
             controller: _scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             itemCount: _messages.length,
-            itemBuilder: (context, index) => ChatBubble(message: _messages[index]),
+            itemBuilder: (context, index) => ChatBubble(
+              message: _messages[index],
+              onApprove: _isStreaming ? null : _approveToolCall,
+              onReject: _isStreaming ? null : _rejectToolCall,
+            ),
           ),
         ),
+        if (pendingCount > 1 && !_isStreaming)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _approveAllToolCalls,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF34C759),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${context.l10n.approveAll} ($pendingCount)',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _rejectAllToolCalls,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          context.l10n.rejectAll,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -404,11 +401,11 @@ class _AiChatModalState extends State<AiChatModal> {
                   onSubmitted: (_) => _sendMessage(),
                   maxLines: 4,
                   minLines: 1,
-                  decoration: const InputDecoration(
-                    hintText: 'Votre message...',
-                    hintStyle: TextStyle(color: Color(0xFF9CA3AF)),
+                  decoration: InputDecoration(
+                    hintText: context.l10n.writeMessage,
+                    hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                   style: const TextStyle(fontSize: 15, color: Color(0xFF1D1D1F)),
                 ),
@@ -417,7 +414,7 @@ class _AiChatModalState extends State<AiChatModal> {
             const SizedBox(width: 8),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: _isStreaming ? _stopStreaming : () => _sendMessage(),
+              onTap: _isStreaming ? _stopStreaming : _sendMessage,
               child: Container(
                 width: 44,
                 height: 44,
@@ -447,6 +444,9 @@ void showAiChatModal(BuildContext context) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useRootNavigator: true,
-    builder: (modalContext) => const AiChatModal(),
+    builder: (modalContext) => ChangeNotifierProvider.value(
+      value: context.read<PillboxProvider>(),
+      child: const AiChatModal(),
+    ),
   );
 }

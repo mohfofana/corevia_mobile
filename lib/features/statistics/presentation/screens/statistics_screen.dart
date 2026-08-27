@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../../home/presentation/providers/home_provider.dart';
 
@@ -12,45 +13,45 @@ class StatisticsScreen extends StatefulWidget {
 }
 
 class _StatisticsScreenState extends State<StatisticsScreen> {
-  String selectedPeriod = 'Semaine';
-  String selectedMetric = 'Tension';
+  String selectedPeriod = 'week';
+  String selectedMetric = 'bloodPressure';
 
-  final List<String> periods = ['Jour', 'Semaine', 'Mois', 'Annee'];
+  final List<String> periods = ['day', 'week', 'month', 'year'];
   final List<String> treatments = [
     'Metformine',
     'Insuline',
     'Amlodipine',
     'Levothyrox',
-    'Paracetamol',
+    'Paracétamol',
   ];
   final List<Map<String, dynamic>> measureEntries = [];
 
   final List<Map<String, dynamic>> metrics = [
-    {'name': 'Tension', 'icon': Icons.favorite, 'color': Color(0xFFFF3B30), 'unit': 'mmHg'},
-    {'name': 'Glycemie', 'icon': Icons.water_drop, 'color': Color(0xFF5856D6), 'unit': 'mg/dL'},
-    {'name': 'Frequence', 'icon': Icons.monitor_heart, 'color': Color(0xFFFF2D55), 'unit': 'bpm'},
-    {'name': 'Temperature', 'icon': Icons.thermostat, 'color': Color(0xFFFF9500), 'unit': 'degC'},
+    {'id': 'bloodPressure', 'icon': Icons.favorite, 'color': Color(0xFFFF3B30), 'unit': 'mmHg'},
+    {'id': 'bloodGlucose', 'icon': Icons.water_drop, 'color': Color(0xFF5856D6), 'unit': 'mg/dL'},
+    {'id': 'heartRate', 'icon': Icons.monitor_heart, 'color': Color(0xFFFF2D55), 'unit': 'bpm'},
+    {'id': 'temperature', 'icon': Icons.thermostat, 'color': Color(0xFFFF9500), 'unit': '°C'},
   ];
 
   List<Map<String, dynamic>> _getChartData() {
     final random = math.Random();
     final data = <Map<String, dynamic>>[];
 
-    final points = selectedPeriod == 'Jour'
+    final points = selectedPeriod == 'day'
         ? 24
-        : selectedPeriod == 'Semaine'
+        : selectedPeriod == 'week'
             ? 7
-            : selectedPeriod == 'Mois'
+            : selectedPeriod == 'month'
                 ? 30
                 : 12;
 
     for (int i = 0; i < points; i++) {
       double value;
-      if (selectedMetric == 'Tension') {
+      if (selectedMetric == 'bloodPressure') {
         value = 110 + random.nextDouble() * 30;
-      } else if (selectedMetric == 'Glycemie') {
+      } else if (selectedMetric == 'bloodGlucose') {
         value = 80 + random.nextDouble() * 40;
-      } else if (selectedMetric == 'Frequence') {
+      } else if (selectedMetric == 'heartRate') {
         value = 60 + random.nextDouble() * 40;
       } else {
         value = 36.5 + random.nextDouble() * 1.5;
@@ -70,6 +71,32 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final avg = values.reduce((a, b) => a + b) / values.length;
 
     return {'min': min, 'max': max, 'avg': avg};
+  }
+
+  String _metricLabel(BuildContext context, String id) {
+    switch (id) {
+      case 'bloodPressure':
+        return context.l10n.bloodPressure;
+      case 'bloodGlucose':
+        return context.l10n.bloodGlucose;
+      case 'heartRate':
+        return context.l10n.heartRate;
+      default:
+        return context.l10n.temperature;
+    }
+  }
+
+  String _periodLabel(BuildContext context, String id) {
+    switch (id) {
+      case 'day':
+        return context.l10n.day;
+      case 'week':
+        return context.l10n.week;
+      case 'month':
+        return context.l10n.month;
+      default:
+        return context.l10n.year;
+    }
   }
 
   @override
@@ -134,24 +161,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => _showSnackBar('Retour'),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.arrow_back, size: 24),
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Statistiques',
+                  context.l10n.statisticsTitle,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -160,7 +175,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Suivez vos mesures de sante',
+                  context.l10n.trackYourHealth,
                   style: TextStyle(
                     fontSize: 14,
                     color: Color(0xFF8E8E93),
@@ -203,7 +218,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    period,
+                    _periodLabel(context, period),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -229,10 +244,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         itemCount: metrics.length,
         itemBuilder: (context, index) {
           final metric = metrics[index];
-          final isSelected = metric['name'] == selectedMetric;
+          final isSelected = metric['id'] == selectedMetric;
 
           return GestureDetector(
-            onTap: () => setState(() => selectedMetric = metric['name'] as String),
+            onTap: () => setState(() => selectedMetric = metric['id'] as String),
             child: Container(
               width: 95,
               margin: const EdgeInsets.only(right: 12),
@@ -269,7 +284,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    metric['name'] as String,
+                    _metricLabel(context, metric['id'] as String),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -290,7 +305,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget _buildChartSection() {
     final data = _getChartData();
-    final metric = metrics.firstWhere((m) => m['name'] == selectedMetric);
+    final metric = metrics.firstWhere((m) => m['id'] == selectedMetric);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -313,8 +328,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Evolution',
+                Text(
+                  context.l10n.evolution,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -361,7 +376,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   Widget _buildStatisticsCards() {
     final stats = _getStatistics();
-    final metric = metrics.firstWhere((m) => m['name'] == selectedMetric);
+    final metric = metrics.firstWhere((m) => m['id'] == selectedMetric);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -369,7 +384,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         children: [
           Expanded(
             child: _buildStatCard(
-              'Minimum',
+              context.l10n.minimum,
               stats['min']!.toStringAsFixed(1),
               metric['unit'] as String,
               const Color(0xFF5856D6),
@@ -379,7 +394,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatCard(
-              'Moyenne',
+              context.l10n.average,
               stats['avg']!.toStringAsFixed(1),
               metric['unit'] as String,
               const Color(0xFF34C759),
@@ -389,7 +404,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatCard(
-              'Maximum',
+              context.l10n.maximum,
               stats['max']!.toStringAsFixed(1),
               metric['unit'] as String,
               const Color(0xFFFF3B30),
@@ -465,7 +480,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     final data = provider.homeData;
 
     if (provider.isLoading && data == null) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(horizontal: 20),
         child: Center(child: CircularProgressIndicator()),
       );
@@ -476,8 +491,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Resume dashboard',
+          Text(
+            context.l10n.appointmentsOverview,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -489,7 +504,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             children: [
               Expanded(
                 child: _buildStatCard(
-                  'RDV/mois',
+                  context.l10n.appointmentsPerMonth,
                   '${data?.appointmentsThisMonth ?? 0}',
                   '',
                   const Color(0xFF007AFF),
@@ -499,7 +514,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
-                  'Terminés',
+                  context.l10n.completed,
                   '${data?.completedAppointments ?? 0}',
                   '',
                   const Color(0xFF34C759),
@@ -513,7 +528,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             children: [
               Expanded(
                 child: _buildStatCard(
-                  'En attente',
+                  context.l10n.pending,
                   '${data?.pendingAppointments ?? 0}',
                   '',
                   const Color(0xFFFF9500),
@@ -523,7 +538,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
-                  'Adhérence',
+                  context.l10n.adherence,
                   '${data?.medicationAdherenceRate ?? 0}',
                   '%',
                   const Color(0xFF5856D6),
@@ -545,7 +560,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: ElevatedButton.icon(
           onPressed: _showAddMeasureDialog,
           icon: const Icon(Icons.add_chart),
-          label: const Text('Ajouter une donnee'),
+          label: Text(context.l10n.addData),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF34C759),
             foregroundColor: Colors.white,
@@ -560,7 +575,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildHistorySection() {
-    final metric = metrics.firstWhere((m) => m['name'] == selectedMetric);
+    final metric = metrics.firstWhere((m) => m['id'] == selectedMetric);
     final currentEntries = measureEntries
         .where((entry) => entry['metric'] == selectedMetric)
         .toList()
@@ -571,8 +586,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Historique recent',
+          Text(
+            context.l10n.recentHistory,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -593,10 +608,10 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               ],
             ),
             child: currentEntries.isEmpty
-                ? const Padding(
+                ? Padding(
                     padding: EdgeInsets.all(18),
                     child: Text(
-                      'Aucune donnee de suivi pour cette metrique.',
+                      context.l10n.noTrackingData,
                       style: TextStyle(
                         fontSize: 14,
                         color: Color(0xFF8E8E93),
@@ -608,6 +623,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     children: List.generate(currentEntries.length, (index) {
                       final entry = currentEntries[index];
                       return _buildHistoryItem(
+                        context,
                         entry['value'].toStringAsFixed(1),
                         metric['unit'] as String,
                         entry['date'] as DateTime,
@@ -624,6 +640,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   Widget _buildHistoryItem(
+    BuildContext context,
     String value,
     String unit,
     DateTime date,
@@ -633,7 +650,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }) {
     final now = DateTime.now();
     final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
-    final dateStr = isToday ? "Aujourd'hui" : "${date.day}/${date.month}/${date.year}";
+    final dateStr = isToday ? context.l10n.today : "${date.day}/${date.month}/${date.year}";
     final timeStr = "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
 
     return Column(
@@ -722,7 +739,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   }
 
   void _showAddMeasureDialog() {
-    final metric = metrics.firstWhere((m) => m['name'] == selectedMetric);
+    final metric = metrics.firstWhere((m) => m['id'] == selectedMetric);
     final metricColor = metric['color'] as Color;
     final metricIcon = metric['icon'] as IconData;
     final valueController = TextEditingController();
@@ -798,8 +815,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      'Nouvelle donnee de suivi',
+                                    Text(
+                                      context.l10n.newTrackingData,
                                       style: TextStyle(
                                         fontSize: 17,
                                         fontWeight: FontWeight.w800,
@@ -808,7 +825,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${metric['name']} - ${metric['unit']}',
+                                      '${_metricLabel(context, metric['id'] as String)} - ${metric['unit']}',
                                       style: TextStyle(
                                         fontSize: 13,
                                         color: metricColor.withValues(alpha: 0.85),
@@ -822,8 +839,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Traitement',
+                        Text(
+                          context.l10n.treatment,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1D1D1F),
@@ -861,8 +878,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           },
                         ),
                         const SizedBox(height: 14),
-                        const Text(
-                          'Valeur',
+                        Text(
+                          context.l10n.value,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1D1D1F),
@@ -884,7 +901,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             controller: valueController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             decoration: InputDecoration(
-                              hintText: 'Ex: 120',
+                              hintText: context.l10n.exampleValue,
                               prefixIcon: Icon(metricIcon, color: metricColor),
                               suffixText: metric['unit'] as String,
                               filled: true,
@@ -906,8 +923,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        const Text(
-                          'Date de mesure',
+                        Text(
+                          context.l10n.measureDate,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1D1D1F),
@@ -977,8 +994,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        const Text(
-                          'Note (optionnel)',
+                        Text(
+                          context.l10n.notesOptional,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1D1D1F),
@@ -1000,7 +1017,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                             controller: noteController,
                             maxLines: 3,
                             decoration: InputDecoration(
-                              hintText: 'Contexte, symptomes, ressenti...',
+                              hintText: context.l10n.contextField,
                               filled: true,
                               fillColor: Colors.white,
                               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1034,13 +1051,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.close_rounded, size: 18),
                                     SizedBox(width: 6),
                                     Text(
-                                      'Annuler',
+                                      context.l10n.cancel,
                                       style: TextStyle(fontWeight: FontWeight.w700),
                                     ),
                                   ],
@@ -1055,7 +1072,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     valueController.text.trim().replaceAll(',', '.'),
                                   );
                                   if (parsedValue == null) {
-                                    _showSnackBar('Valeur numerique invalide.');
+                                    _showSnackBar(context.l10n.valueFormatInvalid);
                                     return;
                                   }
                                   setState(() {
@@ -1068,7 +1085,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                     });
                                   });
                                   Navigator.pop(context);
-                                  _showSnackBar('Donnee enregistree.');
+                                  _showSnackBar(context.l10n.dataSavedMessage);
                                 },
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size.fromHeight(50),
@@ -1079,8 +1096,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                                   ),
                                   elevation: 0,
                                 ),
-                                child: const Text(
-                                  'Enregistrer',
+                                child: Text(
+                                  context.l10n.save,
                                   style: TextStyle(fontWeight: FontWeight.w700),
                                 ),
                               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 
 class ProMemberBadge extends StatelessWidget {
   const ProMemberBadge({super.key});
@@ -13,16 +14,16 @@ class ProMemberBadge extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(
+        children: [
+          const Icon(
             Icons.star,
             color: Colors.amber,
             size: 16,
           ),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
-            'Pro member',
-            style: TextStyle(
+            context.l10n.proMember,
+            style: const TextStyle(
               color: Colors.amber,
               fontWeight: FontWeight.w600,
             ),

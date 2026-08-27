@@ -16,19 +16,19 @@ class RegisterModel {
     final normalizedLastName = lastName.trim();
 
     if (normalizedFirstName.length < 2 || normalizedFirstName.length > 100) {
-      throw ArgumentError('Le prenom doit contenir entre 2 et 100 caracteres');
+      throw ArgumentError('First name must be between 2 and 100 characters');
     }
 
     if (normalizedLastName.length < 2 || normalizedLastName.length > 100) {
-      throw ArgumentError('Le nom doit contenir entre 2 et 100 caracteres');
+      throw ArgumentError('Last name must be between 2 and 100 characters');
     }
 
     if (!_isValidEmail(email)) {
-      throw ArgumentError('Email invalide');
+      throw ArgumentError('Invalid email');
     }
 
     if (password.length < 8 || password.length > 100) {
-      throw ArgumentError('Le mot de passe doit contenir entre 8 et 100 caracteres');
+      throw ArgumentError('Password must be between 8 and 100 characters');
     }
 
     if (!_hasLowercase(password) ||
@@ -36,12 +36,12 @@ class RegisterModel {
         !_hasDigit(password) ||
         !_hasSpecialChar(password)) {
       throw ArgumentError(
-        'Le mot de passe doit contenir minuscule, majuscule, chiffre et caractere special',
+        'Password must contain lowercase, uppercase, digit, and special character',
       );
     }
 
     if (password != confirmPassword) {
-      throw ArgumentError('Les mots de passe ne correspondent pas');
+      throw ArgumentError('Passwords do not match');
     }
   }
 

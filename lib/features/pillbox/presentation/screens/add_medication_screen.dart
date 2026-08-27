@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../../domain/entities/medication_search_result.dart';
 import '../providers/medication_search_provider.dart';
 import '../providers/pillbox_provider.dart';
@@ -101,8 +103,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
-                    'Ajouter au pilulier',
+                : Text(
+                    context.l10n.addToPillbox,
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 16,
@@ -133,8 +135,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           }
         },
       ),
-      title: const Text(
-        'Ajouter un medicament',
+      title: Text(
+        context.l10n.addMedication,
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w800,
@@ -213,15 +215,15 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildSearchCard(MedicationSearchProvider searchProvider) {
     return _card(
-      title: 'Recherche',
+      title: context.l10n.search,
       child: Column(
         children: [
           _styledTextField(
             controller: _searchController,
-            label: 'Rechercher un medicament',
+            label: context.l10n.searchMedication,
             icon: Icons.search_rounded,
             onChanged: context.read<MedicationSearchProvider>().search,
-            hint: 'Minimum 3 caracteres',
+            hint: context.l10n.minimum3Characters,
           ),
           if (searchProvider.isSearching) ...[
             const SizedBox(height: 12),
@@ -297,10 +299,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                   Icon(Icons.info_outline_rounded,
                       size: 18, color: Colors.grey.shade400),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Aucun resultat. Essaie un nom de molecule (ex: paracetamol).',
-                      style: TextStyle(color: _grey, fontSize: 13),
+                      context.l10n.noResultsFound,
+                      style: const TextStyle(color: _grey, fontSize: 13),
                     ),
                   ),
                 ],
@@ -401,27 +403,27 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildInfoCard() {
     return _card(
-      title: 'Informations',
+      title: context.l10n.information,
       child: Column(
         children: [
           _styledTextFormField(
             controller: _nameController,
-            label: 'Nom du medicament',
+            label: context.l10n.medicationName,
             icon: Icons.medication_rounded,
             validator: (value) => (value == null || value.trim().isEmpty)
-                ? 'Champ requis'
+                ? context.l10n.requiredField
                 : null,
           ),
           const SizedBox(height: 14),
           _styledTextField(
             controller: _dosageController,
-            label: 'Posologie',
+            label: context.l10n.dosage,
             icon: Icons.description_outlined,
           ),
           const SizedBox(height: 14),
           _styledTextField(
             controller: _instructionsController,
-            label: 'Instructions',
+            label: context.l10n.instructions,
             icon: Icons.note_outlined,
             maxLines: 2,
           ),
@@ -434,7 +436,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildScheduleCard() {
     return _card(
-      title: 'Plan de prise',
+      title: context.l10n.scheduleTimes,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -442,7 +444,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             children: [
               Expanded(
                 child: _datePickerTile(
-                  label: 'Date de debut',
+                  label: context.l10n.start,
                   date: _startDate,
                   onPick: _pickStartDate,
                 ),
@@ -450,7 +452,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _timePickerTile(
-                  label: 'Horaire',
+                  label: context.l10n.timeOfIntake,
                   time: _time,
                   onPick: _pickTime,
                 ),
@@ -459,15 +461,15 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           ),
           const SizedBox(height: 12),
           _datePickerTile(
-            label: 'Date de fin',
+            label: context.l10n.end,
             date: _endDate,
-            placeholder: 'Aucune',
+            placeholder: context.l10n.none,
             onPick: _pickEndDate,
             onClear: _endDate != null ? () => setState(() => _endDate = null) : null,
           ),
           const SizedBox(height: 14),
-          const Text(
-            'Moment de la journee',
+          Text(
+            context.l10n.momentOfDay,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -479,11 +481,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _momentChip('MORNING', 'Matin', Icons.wb_sunny_rounded),
-              _momentChip('NOON', 'Midi', Icons.wb_twilight_rounded),
-              _momentChip('EVENING', 'Soir', Icons.nights_stay_rounded),
-              _momentChip('BEDTIME', 'Coucher', Icons.bedtime_rounded),
-              _momentChip('CUSTOM', 'Autre', Icons.more_horiz_rounded),
+              _momentChip('MORNING', context.l10n.morning, Icons.wb_sunny_rounded),
+              _momentChip('NOON', context.l10n.noon, Icons.wb_twilight_rounded),
+              _momentChip('EVENING', context.l10n.evening, Icons.nights_stay_rounded),
+              _momentChip('BEDTIME', context.l10n.bedtime, Icons.bedtime_rounded),
+              _momentChip('CUSTOM', context.l10n.other, Icons.more_horiz_rounded),
             ],
           ),
           const SizedBox(height: 14),
@@ -492,7 +494,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               Expanded(
                 child: _styledTextField(
                   controller: _quantityController,
-                  label: 'Quantite',
+                  label: context.l10n.quantity,
                   icon: Icons.numbers_rounded,
                   keyboardType: TextInputType.number,
                 ),
@@ -501,7 +503,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               Expanded(
                 child: _styledTextField(
                   controller: _unitController,
-                  label: 'Unite (mg, ml...)',
+                  label: context.l10n.unitExamples,
                   icon: Icons.straighten_rounded,
                 ),
               ),
@@ -900,10 +902,6 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   String _formatDateFr(DateTime date) {
-    const months = [
-      '', 'janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin',
-      'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre',
-    ];
-    return '${date.day} ${months[date.month]} ${date.year}';
+    return DateFormat.yMMMMd('fr_FR').format(date);
   }
 }

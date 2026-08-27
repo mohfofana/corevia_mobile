@@ -11,16 +11,16 @@ class HomeRepositoryImpl implements HomeRepository {
     try {
       final meResponse = await ApiService.authGet(UserRoutes.me());
       if (meResponse is! Map<String, dynamic>) {
-        throw Exception('Format de reponse invalide');
+        throw Exception('Invalid response format');
       }
 
       final user = _asMap(meResponse['user'] ?? meResponse);
       final stats = _asMap(meResponse['stats']);
 
       return HomeData(
-        title: 'Bienvenue sur CoreVia',
-        description: 'Votre application de gestion CoreVia',
-        userName: (user['name'] ?? 'Utilisateur').toString(),
+        title: 'Welcome to CoreVia',
+        description: 'Your CoreVia management app',
+        userName: (user['name'] ?? 'User').toString(),
         userImage: user['image']?.toString(),
         alertsCount: _asInt(meResponse['alertsCount']),
         appointmentsThisMonth: _asInt(stats['appointmentsThisMonth']),
@@ -31,9 +31,9 @@ class HomeRepositoryImpl implements HomeRepository {
     } catch (e) {
       debugPrint('HomeRepositoryImpl.getHomeData error: $e');
       return const HomeData(
-        title: 'Bienvenue sur CoreVia',
-        description: 'Votre application de gestion CoreVia',
-        userName: 'Utilisateur',
+        title: 'Welcome to CoreVia',
+        description: 'Your CoreVia management app',
+        userName: 'User',
         userImage: null,
         alertsCount: 0,
         appointmentsThisMonth: 0,

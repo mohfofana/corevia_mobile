@@ -11,22 +11,22 @@ class RagAgent {
 class RagAgents {
   static const medecinGeneraliste = RagAgent(
     id: 'medecin_generaliste',
-    label: 'Médecin généraliste',
+    label: 'General practitioner',
   );
 
   static const dermatologue = RagAgent(
     id: 'dermatologue',
-    label: 'Dermatologue',
+    label: 'Dermatologist',
   );
 
   static const nutritionniste = RagAgent(
     id: 'nutritionniste',
-    label: 'Nutritionniste',
+    label: 'Nutritionist',
   );
 
   static const psychologue = RagAgent(
     id: 'psychologue',
-    label: 'Psychologue',
+    label: 'Psychologist',
   );
 
   static const all = <RagAgent>[

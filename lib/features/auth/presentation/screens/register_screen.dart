@@ -5,6 +5,7 @@ import 'package:corevia_mobile/features/account/presentation/providers/user_prov
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import '../controllers/register_controller.dart';
 
 import 'dart:math' as math;
@@ -69,29 +70,41 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
   }
 
   String? _validateEmail(String? value) {
-    return Validators.validateEmail(value);
+    return Validators.validateEmail(value, l10n: context.l10n);
   }
 
   String? _validatePassword(String? value) {
-    return Validators.validatePassword(value, requireStrongRules: true);
+    return Validators.validatePassword(
+      value,
+      requireStrongRules: true,
+      l10n: context.l10n,
+    );
   }
 
   String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) return 'Confirmation requise';
-    if (value != _passwordController.text) return 'Mots de passe differents';
+    if (value == null || value.isEmpty) return context.l10n.confirmationRequired;
+    if (value != _passwordController.text) return context.l10n.passwordsDifferent;
     return null;
   }
 
   Future<void> _register() async {
     final firstNameError =
-        Validators.validateUsername(_firstNameController.text, fieldName: 'Prenom');
+        Validators.validateUsername(
+          _firstNameController.text,
+          fieldName: context.l10n.firstName,
+          l10n: context.l10n,
+        );
     if (firstNameError != null) {
       _showValidationError(firstNameError);
       return;
     }
 
     final lastNameError =
-        Validators.validateUsername(_lastNameController.text, fieldName: 'Nom');
+        Validators.validateUsername(
+          _lastNameController.text,
+          fieldName: context.l10n.lastName,
+          l10n: context.l10n,
+        );
     if (lastNameError != null) {
       _showValidationError(lastNameError);
       return;
@@ -129,19 +142,21 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           context.go('/home');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Echec de l\'inscription. Veuillez reessayer.'),
-              backgroundColor: Color(0xFFFF3B30),
-              behavior: SnackBarBehavior.floating,
-            ),
+          SnackBar(
+            content: Text(context.l10n.registrationFailed),
+            backgroundColor: Color(0xFFFF3B30),
+            behavior: SnackBarBehavior.floating,
+          ),
           );
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('Register error: $e');
+      debugPrintStack(stackTrace: st);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: ${e.toString()}'),
+            content: Text(context.l10n.pleaseTryAgain),
             backgroundColor: Color(0xFFFF3B30),
             behavior: SnackBarBehavior.floating,
           ),
@@ -157,14 +172,22 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
   void _nextStep() {
     if (_currentStep == 0) {
       final firstNameError =
-          Validators.validateUsername(_firstNameController.text, fieldName: 'Prenom');
+          Validators.validateUsername(
+            _firstNameController.text,
+            fieldName: context.l10n.firstName,
+            l10n: context.l10n,
+          );
       if (firstNameError != null) {
         _showValidationError(firstNameError);
         return;
       }
 
       final lastNameError =
-          Validators.validateUsername(_lastNameController.text, fieldName: 'Nom');
+          Validators.validateUsername(
+            _lastNameController.text,
+            fieldName: context.l10n.lastName,
+            l10n: context.l10n,
+          );
       if (lastNameError != null) {
         _showValidationError(lastNameError);
         return;
@@ -280,7 +303,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           Expanded(
             child: Center(
               child: Text(
-                'Créer un compte',
+                context.l10n.createAccount,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -412,7 +435,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           ),
           SizedBox(height: 32),
           Text(
-            'Informations personnelles',
+            context.l10n.personalInformation,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 28,
@@ -423,7 +446,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           ),
           SizedBox(height: 8),
           Text(
-            'Comment devons-nous vous appeler?',
+            context.l10n.howShouldWeCallYou,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -434,13 +457,13 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           SizedBox(height: 48),
           _buildStepTextField(
             controller: _firstNameController,
-            label: 'Prénom',
+            label: context.l10n.firstName,
             icon: Icons.person_outline,
           ),
           SizedBox(height: 20),
           _buildStepTextField(
             controller: _lastNameController,
-            label: 'Nom',
+            label: context.l10n.lastName,
             icon: Icons.person_outline,
           ),
           SizedBox(height: 40),
@@ -484,7 +507,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           ),
           SizedBox(height: 32),
           Text(
-            'Votre email',
+            context.l10n.yourEmail,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 28,
@@ -495,7 +518,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           ),
           SizedBox(height: 8),
           Text(
-            'Nous l\'utiliserons pour vous connecter',
+            context.l10n.weWillUseItToConnect,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
@@ -506,7 +529,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           SizedBox(height: 48),
           _buildStepTextField(
             controller: _emailController,
-            label: 'Email',
+            label: context.l10n.email,
             icon: Icons.email_outlined,
             keyboardType: TextInputType.emailAddress,
             validator: _validateEmail,
@@ -554,7 +577,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             ),
             SizedBox(height: 32),
             Text(
-              'Sécurisez votre compte',
+              context.l10n.secureYourAccount,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 28,
@@ -565,7 +588,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             ),
             SizedBox(height: 8),
             Text(
-              'Choisissez un mot de passe fort',
+              context.l10n.chooseStrongPassword,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -576,7 +599,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             SizedBox(height: 48),
             _buildStepTextField(
               controller: _passwordController,
-              label: 'Mot de passe',
+              label: context.l10n.password,
               icon: Icons.lock_outline_rounded,
               obscureText: _obscurePassword,
               validator: _validatePassword,
@@ -591,7 +614,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             SizedBox(height: 20),
             _buildStepTextField(
               controller: _confirmPasswordController,
-              label: 'Confirmer le mot de passe',
+              label: context.l10n.confirmPassword,
               icon: Icons.lock_outline_rounded,
               obscureText: _obscureConfirmPassword,
               validator: _validateConfirmPassword,
@@ -682,7 +705,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                   ),
                 ),
                 child: Text(
-                  'Retour',
+                  context.l10n.back,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -721,7 +744,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 ),
               ),
               child: Text(
-                'Suivant',
+                context.l10n.next,
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -773,7 +796,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Créer mon compte',
+                    context.l10n.createMyAccount,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -788,4 +811,3 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
     );
   }
 }
-

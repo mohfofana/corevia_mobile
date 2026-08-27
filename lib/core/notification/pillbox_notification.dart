@@ -11,6 +11,7 @@ import '../../features/pillbox/domain/entities/intake.dart';
 const _channelId = 'pillbox_channel';
 const _channelName = 'Rappels médicaments';
 const _channelDesc = 'Rappels pour prendre vos médicaments';
+const _darwinCategoryId = 'pillbox_actions';
 
 final _plugin = FlutterLocalNotificationsPlugin();
 bool _initialized = false;
@@ -37,7 +38,42 @@ Future<void> initializePillboxNotifications() async {
   if (_initialized) return;
 
   const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-  const settings = InitializationSettings(android: android);
+  final darwin = DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+    notificationCategories: <DarwinNotificationCategory>[
+      DarwinNotificationCategory(
+        _darwinCategoryId,
+        actions: <DarwinNotificationAction>[
+          DarwinNotificationAction.plain(
+            'taken',
+            '✅ Pris',
+            options: <DarwinNotificationActionOption>{
+              DarwinNotificationActionOption.foreground,
+            },
+          ),
+          DarwinNotificationAction.plain(
+            'skipped',
+            '❌ Ignorer',
+            options: <DarwinNotificationActionOption>{
+              DarwinNotificationActionOption.foreground,
+              DarwinNotificationActionOption.destructive,
+            },
+          ),
+        ],
+        options: <DarwinNotificationCategoryOption>{
+          DarwinNotificationCategoryOption.customDismissAction,
+        },
+      ),
+    ],
+  );
+
+  final settings = InitializationSettings(
+    android: android,
+    iOS: darwin,
+    macOS: darwin,
+  );
 
   await _plugin.initialize(
     settings,
@@ -49,6 +85,22 @@ Future<void> initializePillboxNotifications() async {
   final androidImpl = _plugin.resolvePlatformSpecificImplementation<
       AndroidFlutterLocalNotificationsPlugin>();
   await androidImpl?.requestNotificationsPermission();
+
+  final iosImpl = _plugin.resolvePlatformSpecificImplementation<
+      IOSFlutterLocalNotificationsPlugin>();
+  await iosImpl?.requestPermissions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  final macImpl = _plugin.resolvePlatformSpecificImplementation<
+      MacOSFlutterLocalNotificationsPlugin>();
+  await macImpl?.requestPermissions(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   _initialized = true;
 }
@@ -91,7 +143,11 @@ void _onBackgroundResponse(NotificationResponse details) async {
   }
 
   try {
-    await dotenv.load(fileName: '.env');
+    try {
+      await dotenv.load(fileName: '.env');
+    } catch (_) {
+      // `.env` is optional in local/dev contexts.
+    }
 
     final baseUrl = dotenv.env['API_BASE_URL_ANDROID'] ??
         dotenv.env['API_BASE_URL'] ??
@@ -223,13 +279,25 @@ void _scheduleIntakeReminder(Intake intake) {
     subText: 'CoreVia',
   );
 
+  const darwinDetails = DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+    categoryIdentifier: _darwinCategoryId,
+  );
+
   // Use Timer + show() for reliable delivery
   final timer = Timer(delay, () {
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+      macOS: darwinDetails,
+    );
     _plugin.show(
       notifId,
       title,
       body,
-      NotificationDetails(android: androidDetails),
+      details,
       payload: intake.id,
     );
     if (kDebugMode) {

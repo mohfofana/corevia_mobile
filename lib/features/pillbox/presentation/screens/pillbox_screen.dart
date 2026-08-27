@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import '../../domain/entities/patient_medication.dart';
 import '../providers/pillbox_provider.dart';
 import '../widgets/medication_list_card.dart';
@@ -65,8 +66,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
                     }
                   },
                 ),
-                title: const Text(
-                  'Medication Plan',
+                title: Text(
+                  context.l10n.medicationPlan,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -78,7 +79,7 @@ class _PillboxScreenState extends State<PillboxScreen> {
                   IconButton(
                     icon: const Icon(Icons.history_rounded,
                         size: 22, color: Color.fromARGB(255, 0, 0, 0)),
-                    tooltip: 'Historique',
+                    tooltip: context.l10n.history,
                     onPressed: () => context.push('/pillbox/history'),
                   ),
                 ],
@@ -102,7 +103,7 @@ class _PillboxScreenState extends State<PillboxScreen> {
                       Row(
                         children: [
                           _SummaryCard(
-                            label: 'Total',
+                            label: context.l10n.total,
                             count: provider.medications.length,
                             icon: Icons.medication_rounded,
                             color: const Color(0xFF34C759),
@@ -110,7 +111,7 @@ class _PillboxScreenState extends State<PillboxScreen> {
                           ),
                           const SizedBox(width: 10),
                           _SummaryCard(
-                            label: 'Actifs',
+                            label: context.l10n.active,
                             count: activeCount,
                             icon: Icons.check_circle_outline_rounded,
                             color: const Color(0xFF007AFF),
@@ -118,7 +119,7 @@ class _PillboxScreenState extends State<PillboxScreen> {
                           ),
                           const SizedBox(width: 10),
                           _SummaryCard(
-                            label: 'Inactifs',
+                            label: context.l10n.inactive,
                             count: inactiveCount,
                             icon: Icons.pause_circle_outline_rounded,
                             color: const Color(0xFFFF9500),
@@ -133,21 +134,21 @@ class _PillboxScreenState extends State<PillboxScreen> {
                       Row(
                         children: [
                           _FilterChip(
-                            label: 'Tous',
+                            label: context.l10n.all,
                             selected: _filter == _Filter.all,
                             onTap: () =>
                                 setState(() => _filter = _Filter.all),
                           ),
                           const SizedBox(width: 8),
                           _FilterChip(
-                            label: 'Actifs',
+                            label: context.l10n.active,
                             selected: _filter == _Filter.active,
                             onTap: () =>
                                 setState(() => _filter = _Filter.active),
                           ),
                           const SizedBox(width: 8),
                           _FilterChip(
-                            label: 'Inactifs',
+                            label: context.l10n.inactive,
                             selected: _filter == _Filter.inactive,
                             onTap: () =>
                                 setState(() => _filter = _Filter.inactive),
@@ -195,8 +196,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
                         const SizedBox(height: 12),
                         Text(
                           _filter == _Filter.active
-                              ? 'Aucun medicament actif'
-                              : 'Aucun medicament inactif',
+                              ? context.l10n.noMedicationsActive
+                              : context.l10n.noMedicationsInactive,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -246,8 +247,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
                                       ),
                                 label: Text(
                                   provider.isLoading
-                                      ? 'Chargement...'
-                                      : 'Charger plus',
+                                      ? context.l10n.loading
+                                      : context.l10n.loadMore,
                                   style: const TextStyle(
                                     color: Color(0xFF34C759),
                                     fontWeight: FontWeight.w700,
@@ -273,8 +274,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
         elevation: 4,
         onPressed: () => context.push('/pillbox/add'),
         icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text(
-          'Ajouter',
+        label: Text(
+          context.l10n.addMedication,
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -304,8 +305,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Votre pilulier est vide',
+            Text(
+              context.l10n.emptyPillboxTitle,
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -315,7 +316,7 @@ class _PillboxScreenState extends State<PillboxScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Ajoutez votre premier medicament\npour commencer votre suivi.',
+              context.l10n.emptyPillboxSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey.shade600,
@@ -338,8 +339,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.add_rounded),
-                label: const Text(
-                  'Ajouter un medicament',
+                label: Text(
+                  context.l10n.addMedication,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -388,8 +389,8 @@ class _PillboxScreenState extends State<PillboxScreen> {
               onPressed: () => provider.loadMedications(refresh: true),
               icon: const Icon(Icons.refresh_rounded,
                   color: Color(0xFF34C759)),
-              label: const Text(
-                'Reessayer',
+              label: Text(
+                context.l10n.retry,
                 style: TextStyle(
                   color: Color(0xFF34C759),
                   fontWeight: FontWeight.w700,

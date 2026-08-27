@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/entities/appointment.dart';
@@ -85,23 +86,22 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
                           : TabBarView(
                               controller: _tabController,
                               children: [
-                                _buildAppointmentsList(
+                              _buildAppointmentsList(
                                   appointments: upcoming,
-                                  emptyTitle: 'Aucun rendez-vous a venir',
-                                  emptySubtitle:
-                                      'Prenez un rendez-vous depuis la liste des medecins.',
+                                  emptyTitle: context.l10n.noUpcomingAppointments,
+                                  emptySubtitle: context.l10n.bookFromDoctorsList,
                                 ),
                                 _buildAppointmentsList(
                                   appointments: past,
-                                  emptyTitle: 'Aucun rendez-vous passe',
+                                  emptyTitle: context.l10n.noPastAppointments,
                                   emptySubtitle:
-                                      'Vos consultations terminees apparaitront ici.',
+                                      context.l10n.pastConsultationsWillAppearHere,
                                 ),
                                 _buildAppointmentsList(
                                   appointments: cancelled,
-                                  emptyTitle: 'Aucun rendez-vous annule',
+                                  emptyTitle: context.l10n.noCancelledAppointments,
                                   emptySubtitle:
-                                      'Les rendez-vous annules apparaitront ici.',
+                                      context.l10n.cancelledAppointmentsWillAppearHere,
                                 ),
                               ],
                             ),
@@ -127,10 +127,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
             onTap: _handleBack,
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Mes rendez-vous',
-              style: TextStyle(
+              context.l10n.myAppointments,
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF111827),
@@ -157,7 +157,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
         children: [
           Expanded(
             child: _SummaryCard(
-              label: 'Total',
+              label: context.l10n.total,
               value: total,
               color: const Color(0xFF0EA5E9),
               icon: Icons.calendar_month_rounded,
@@ -166,7 +166,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
           const SizedBox(width: 10),
           Expanded(
             child: _SummaryCard(
-              label: 'A venir',
+              label: context.l10n.upcoming,
               value: upcoming,
               color: const Color(0xFF34C759),
               icon: Icons.schedule_rounded,
@@ -175,7 +175,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
           const SizedBox(width: 10),
           Expanded(
             child: _SummaryCard(
-              label: 'Termines',
+              label: context.l10n.completed,
               value: completed,
               color: const Color(0xFF6366F1),
               icon: Icons.check_circle_rounded,
@@ -215,9 +215,9 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
             fontSize: 12,
           ),
           tabs: [
-            Tab(text: 'A venir ($upcoming)'),
-            Tab(text: 'Passes ($past)'),
-            Tab(text: 'Annules ($cancelled)'),
+            Tab(text: '${context.l10n.upcoming} ($upcoming)'),
+            Tab(text: '${context.l10n.past} ($past)'),
+            Tab(text: '${context.l10n.cancelled} ($cancelled)'),
           ],
         ),
       ),
@@ -260,10 +260,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
         ? DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(parsedDate)
         : appointment.date;
     final formattedDate = _capitalize(dateLabel);
-    final doctorName = appointment.doctor?.name ?? 'Medecin';
+    final doctorName = appointment.doctor?.name ?? context.l10n.doctor;
     final specialty = appointment.doctor?.specialty ?? '';
     final address = appointment.doctor?.address ?? '';
-    final status = _statusMeta(appointment.status);
+    final status = _statusMeta(context, appointment.status);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -449,7 +449,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
             TextButton.icon(
               onPressed: _reload,
               icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Reessayer'),
+              label: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -457,32 +457,32 @@ class _AppointmentsScreenState extends State<AppointmentsScreen>
     );
   }
 
-  _StatusMeta _statusMeta(String raw) {
+  _StatusMeta _statusMeta(BuildContext context, String raw) {
     switch (raw.toUpperCase()) {
       case 'CONFIRMED':
-        return const _StatusMeta(
-          label: 'Confirme',
+        return _StatusMeta(
+          label: context.l10n.confirmed,
           textColor: Color(0xFF047857),
           bgColor: Color(0xFFD1FAE5),
           icon: Icons.verified_rounded,
         );
       case 'COMPLETED':
-        return const _StatusMeta(
-          label: 'Termine',
+        return _StatusMeta(
+          label: context.l10n.completed,
           textColor: Color(0xFF3730A3),
           bgColor: Color(0xFFE0E7FF),
           icon: Icons.check_circle_rounded,
         );
       case 'CANCELLED':
-        return const _StatusMeta(
-          label: 'Annule',
+        return _StatusMeta(
+          label: context.l10n.cancelled,
           textColor: Color(0xFFB42318),
           bgColor: Color(0xFFFEE4E2),
           icon: Icons.close_rounded,
         );
       default:
-        return const _StatusMeta(
-          label: 'En attente',
+        return _StatusMeta(
+          label: context.l10n.pending,
           textColor: Color(0xFFB45309),
           bgColor: Color(0xFFFEF3C7),
           icon: Icons.hourglass_top_rounded,

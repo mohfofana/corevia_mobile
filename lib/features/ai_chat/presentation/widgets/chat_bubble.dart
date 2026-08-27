@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 
 import '../../domain/chat_message.dart';
 
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
+  final void Function(ToolCallInfo)? onApprove;
+  final void Function(ToolCallInfo)? onReject;
 
   const ChatBubble({
     super.key,
     required this.message,
+    this.onApprove,
+    this.onReject,
   });
 
   @override
@@ -21,7 +26,7 @@ class ChatBubble extends StatelessWidget {
           isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         // Text bubble (if content exists or is loading)
-        if (message.content.isNotEmpty || !isError)
+        if (message.content.isNotEmpty || (message.toolCalls.isEmpty && !isError))
           Align(
             alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
             child: Container(
@@ -59,6 +64,14 @@ class ChatBubble extends StatelessWidget {
                     )
                   : _AssistantContent(message: message, isError: isError),
             ),
+          ),
+
+        // Tool call cards
+        for (final tc in message.toolCalls)
+          _ToolCallCard(
+            toolCall: tc,
+            onApprove: onApprove != null ? () => onApprove!(tc) : null,
+            onReject: onReject != null ? () => onReject!(tc) : null,
           ),
       ],
     );
@@ -116,6 +129,159 @@ class _AssistantContent extends StatelessWidget {
         ),
         blockquotePadding:
             const EdgeInsets.only(left: 12, top: 4, bottom: 4),
+      ),
+    );
+  }
+}
+
+class _ToolCallCard extends StatelessWidget {
+  final ToolCallInfo toolCall;
+  final VoidCallback? onApprove;
+  final VoidCallback? onReject;
+
+  const _ToolCallCard({
+    required this.toolCall,
+    this.onApprove,
+    this.onReject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = toolCall.state == ToolCallState.pending;
+    final isApproved = toolCall.state == ToolCallState.approved;
+    final isRejected = toolCall.state == ToolCallState.rejected;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
+        margin: const EdgeInsets.only(right: 48, bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isPending
+              ? const Color(0xFFFFF7ED)
+              : isApproved
+                  ? const Color(0xFFF0FDF4)
+                  : const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isPending
+                ? const Color(0xFFFED7AA)
+                : isApproved
+                    ? const Color(0xFFBBF7D0)
+                    : const Color(0xFFFECACA),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  isPending
+                      ? Icons.pending_actions_rounded
+                      : isApproved
+                          ? Icons.check_circle_rounded
+                          : Icons.cancel_rounded,
+                  size: 18,
+                  color: isPending
+                      ? const Color(0xFFEA580C)
+                      : isApproved
+                          ? const Color(0xFF16A34A)
+                          : const Color(0xFFDC2626),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    toolCall.displayName,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1D1D1F),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (isPending) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      label: context.l10n.approve,
+                      color: const Color(0xFF34C759),
+                      onTap: onApprove,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _ActionButton(
+                      label: context.l10n.reject,
+                      color: const Color(0xFFEF4444),
+                      onTap: onReject,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (isApproved)
+              Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Text(
+                  context.l10n.approved,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A)),
+                ),
+              ),
+            if (isRejected)
+              Padding(
+                padding: EdgeInsets.only(top: 6),
+                child: Text(
+                  context.l10n.rejected,
+                  style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626)),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _ActionButton({
+    required this.label,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:corevia_mobile/core/theme/colors.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../providers/user_provider.dart';
 
@@ -35,7 +36,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _dobController = TextEditingController(text: user?.dateOfBirth ?? '');
     _addressController = TextEditingController(text: user?.address ?? '');
-    _selectedGender = user?.gender;
+    _selectedGender = _normalizeGender(user?.gender);
   }
 
   @override
@@ -49,6 +50,36 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
     super.dispose();
   }
 
+  String? _normalizeGender(String? value) {
+    if (value == null) return null;
+    final normalized = value.trim().toLowerCase();
+    switch (normalized) {
+      case 'male':
+      case 'homme':
+      case 'm':
+        return 'Male';
+      case 'female':
+      case 'femme':
+      case 'f':
+        return 'Female';
+      case 'other':
+      case 'autre':
+      case 'o':
+        return 'Other';
+      default:
+        return ['Male', 'Female', 'Other'].contains(value) ? value : null;
+    }
+  }
+
+  String _toIsoDate(String ddmmyyyy) {
+    final parts = ddmmyyyy.split('/');
+    if (parts.length != 3) return ddmmyyyy;
+    final d = parts[0].padLeft(2, '0');
+    final m = parts[1].padLeft(2, '0');
+    final y = parts[2];
+    return '$y-$m-$d';
+  }
+
   Future<void> _saveChanges() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -56,14 +87,16 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       });
 
       final fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim();
+      final dob = _dobController.text.trim();
+      final address = _addressController.text.trim();
 
-      final data = {
-        'name': fullName,
+      final data = <String, dynamic>{
+        if (fullName.isNotEmpty) 'name': fullName,
         'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'gender': _selectedGender,
-        'dateOfBirth': _dobController.text.trim(),
-        'address': _addressController.text.trim(),
+        if (_selectedGender != null) 'gender': _selectedGender,
+        if (dob.isNotEmpty) 'dateOfBirth': _toIsoDate(dob),
+        if (address.isNotEmpty) 'address': address,
       };
 
       final success = await context.read<UserProvider>().updateUser(data);
@@ -77,8 +110,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(success
-              ? 'Profile updated successfully!'
-              : 'Failed to update profile'),
+              ? context.l10n.profileUpdatedSuccessfully
+              : context.l10n.profileUpdateFailed),
           backgroundColor: success ? AppColors.green : Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -121,11 +154,11 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                       // Champs de formulaire avec nouveau style
                       _buildTextField(
                         controller: _firstNameController,
-                        label: 'First Name',
+                        label: context.l10n.firstName,
                         icon: Icons.person_outline,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your first name';
+                            return context.l10n.pleaseEnterFirstName;
                           }
                           return null;
                         },
@@ -135,11 +168,11 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
                       _buildTextField(
                         controller: _lastNameController,
-                        label: 'Last Name',
+                        label: context.l10n.lastName,
                         icon: Icons.person_outline,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your last name';
+                            return context.l10n.pleaseEnterLastName;
                           }
                           return null;
                         },
@@ -149,15 +182,15 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
                       _buildTextField(
                         controller: _emailController,
-                        label: 'Email',
+                        label: context.l10n.email,
                         icon: LucideIcons.mail,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
+                            return context.l10n.pleaseEnterEmail;
                           }
                           if (!value.contains('@')) {
-                            return 'Please enter a valid email';
+                            return context.l10n.pleaseEnterValidEmail;
                           }
                           return null;
                         },
@@ -167,12 +200,12 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
                       _buildTextField(
                         controller: _phoneController,
-                        label: 'Phone',
+                        label: context.l10n.phone,
                         icon: LucideIcons.phone,
                         keyboardType: TextInputType.phone,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your phone number';
+                            return context.l10n.pleaseEnterPhone;
                           }
                           return null;
                         },
@@ -193,7 +226,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
                       _buildTextField(
                         controller: _dobController,
-                        label: 'Date of Birth',
+                        label: context.l10n.dateOfBirth,
                         icon: LucideIcons.cake,
                         readOnly: true,
                         onTap: () async {
@@ -224,7 +257,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
 
                       _buildTextField(
                         controller: _addressController,
-                        label: 'Address',
+                        label: context.l10n.address,
                         icon: LucideIcons.mapPinHouse,
                         maxLines: 2,
                       ),
@@ -276,8 +309,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
             padding: EdgeInsets.zero,
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Edit Profile',
+          Text(
+            context.l10n.editProfile,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -322,7 +355,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Change photo functionality'),
+                  content: Text(context.l10n.changeProfilePhoto),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -454,7 +487,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       child: DropdownButtonFormField<String>(
         initialValue: selectedGender,
         decoration: InputDecoration(
-          labelText: 'Gender',
+          labelText: context.l10n.gender,
           labelStyle: TextStyle(
             color: Colors.grey.shade600,
             fontSize: 15,
@@ -487,11 +520,15 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
             borderSide: const BorderSide(color: AppColors.green, width: 2),
           ),
         ),
-        items: <String>['Male', 'Female', 'Other'].map<DropdownMenuItem<String>>((String value) {
+        items: const <String>['Male', 'Female', 'Other'].map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(
-              value,
+              value == 'Male'
+                  ? context.l10n.male
+                  : value == 'Female'
+                      ? context.l10n.female
+                      : context.l10n.other,
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -503,7 +540,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
         onChanged: onChanged,
         validator: (value) {
           if (value == null) {
-            return 'Please select your gender';
+            return context.l10n.selectGender;
           }
           return null;
         },
@@ -529,8 +566,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Security',
+          Text(
+            context.l10n.security,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
@@ -543,7 +580,7 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('Change password page'),
+                  content: Text(context.l10n.changePassword),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -569,9 +606,9 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Change Password',
+                      context.l10n.changePassword,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -606,8 +643,8 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Text(
-              'Cancel',
+            child: Text(
+              context.l10n.cancel,
               style: TextStyle(
                 color: AppColors.green,
                 fontSize: 16,
@@ -637,9 +674,9 @@ class _EditAccountScreenState extends State<EditAccountScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    'Save Changes',
-                    style: TextStyle(
+                : Text(
+                context.l10n.saveChanges,
+                style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,

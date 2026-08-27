@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String doctorId;
@@ -145,9 +146,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
               ),
             ),
           ),
-          const Text(
-            'Statut du rendez-vous',
-            style: TextStyle(
+          Text(
+            context.l10n.appointmentStatus,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1D1D1F),
@@ -211,9 +212,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
       ),
       child: Column(
         children: [
-          const Text(
-            'Demande envoyée !',
-            style: TextStyle(
+          Text(
+            context.l10n.requestSent,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1D1D1F),
@@ -238,9 +239,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'En attente de confirmation',
-                  style: TextStyle(
+                Text(
+                  context.l10n.waitingConfirmation,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFFFF9500),
@@ -271,9 +272,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Détails du rendez-vous',
-            style: TextStyle(
+          Text(
+            context.l10n.appointmentDetails,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: Color(0xFF1D1D1F),
@@ -354,19 +355,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
           // Date & Time
           _buildDetailRow(
             icon: LucideIcons.calendar,
-            label: 'Date',
+            label: context.l10n.dateLabel,
             value: DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(widget.date),
           ),
           const SizedBox(height: 16),
           _buildDetailRow(
             icon: LucideIcons.clock3,
-            label: 'Heure',
+            label: context.l10n.timeLabel,
             value: widget.timeSlot,
           ),
           const SizedBox(height: 16),
           _buildDetailRow(
             icon: LucideIcons.mapPin,
-            label: 'Adresse',
+            label: context.l10n.addressLabel,
             value: widget.address,
           ),
         ],
@@ -451,9 +452,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Et maintenant ?',
-                  style: TextStyle(
+                Text(
+                  context.l10n.andNow,
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1D1D1F),
@@ -461,7 +462,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Vous recevrez une notification une fois que le médecin aura confirmé votre demande de rendez-vous.',
+                  context.l10n.youWillReceiveNotification,
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade700,
@@ -507,7 +508,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
@@ -517,8 +518,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
                 ),
                 SizedBox(width: 10),
                 Text(
-                  'Retour à l\'accueil',
-                  style: TextStyle(
+                  context.l10n.backToHome,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -538,7 +539,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
@@ -548,8 +549,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen>
               ),
               SizedBox(width: 8),
               Text(
-                'Voir mes rendez-vous',
-                style: TextStyle(
+                context.l10n.seeMyAppointments,
+                style: const TextStyle(
                   fontSize: 15,
                   color: Color(0xFF34C759),
                   fontWeight: FontWeight.w600,

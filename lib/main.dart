@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
@@ -14,19 +16,28 @@ import 'features/account/presentation/providers/user_provider.dart';
 import 'features/account/data/repositories/user_repository_impl.dart';
 import 'features/pillbox/data/repositories/pillbox_repository_impl.dart';
 import 'features/pillbox/presentation/providers/medication_search_provider.dart';
+import 'features/documents/presentation/providers/document_provider.dart';
 import 'features/pillbox/presentation/providers/pillbox_provider.dart';
 import 'features/booking/data/repositories/booking_repository_impl.dart';
 import 'features/booking/presentation/providers/booking_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'l10n/app_localizations.dart';
 import 'core/providers/notifiers.dart';
 import 'networking/api_service.dart';
 import 'networking/routes/user_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+    await initializeDateFormatting('fr_FR', null);
+    await initializeDateFormatting('en_US', null);
+  } catch (e) {
+    // Keep boot resilient in dev setups where `.env` isn't present yet.
+    debugPrint('⚠️  Unable to load .env (continuing): $e');
+  }
 
   // Initialize timezones and set device local timezone
   tz_data.initializeTimeZones();
@@ -48,6 +59,7 @@ void main() async {
 
   final onboardingNotifier = OnboardingNotifier(onboardingNeeded);
   final authNotifier = AuthNotifier(false);
+  final localeNotifier = LocaleNotifier(await LocaleNotifier.load());
 
   // Restore local session first (persistent login)
   const secureStorage = FlutterSecureStorage();
@@ -139,11 +151,17 @@ void main() async {
         ChangeNotifierProvider<UserProvider>.value(
           value: userProvider,
         ),
+        ChangeNotifierProvider(
+          create: (_) => DocumentProvider(),
+        ),
         ChangeNotifierProvider<OnboardingNotifier>.value(
           value: onboardingNotifier,
         ),
         ChangeNotifierProvider<AuthNotifier>.value(
           value: authNotifier,
+        ),
+        ChangeNotifierProvider<LocaleNotifier>.value(
+          value: localeNotifier,
         ),
       ],
       child: MyApp(router: router),
@@ -158,9 +176,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeNotifier = context.watch<LocaleNotifier>();
+    final locale = localeNotifier.value;
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'CoreVia Mobile',
+      onGenerateTitle: (context) => AppLocalizations.appName,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      locale: locale,
       theme: AppTheme.lightTheme,
       routerConfig: router,
     );

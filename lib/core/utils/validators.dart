@@ -1,3 +1,5 @@
+import 'package:corevia_mobile/l10n/app_localizations.dart';
+
 class Validators {
   static final RegExp _emailRegex =
       RegExp(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$');
@@ -7,13 +9,13 @@ class Validators {
   static final RegExp _specialCharRegex =
       RegExp(r'[!@#$%^&*(),.?":{}|<>_\-\\/\[\]`~+=;]');
 
-  static String? validateEmail(String? value) {
+  static String? validateEmail(String? value, {AppLocalizations? l10n}) {
     if (value == null || value.trim().isEmpty) {
-      return 'Veuillez entrer votre adresse email';
+      return l10n?.pleaseEnterEmail ?? 'Please enter your email address';
     }
 
     if (!_emailRegex.hasMatch(value.trim())) {
-      return 'Veuillez entrer une adresse email valide';
+      return l10n?.pleaseEnterValidEmail ?? 'Please enter a valid email address';
     }
 
     return null;
@@ -21,29 +23,33 @@ class Validators {
 
   static String? validateRequired(
     String? value, {
-    String fieldName = 'Ce champ',
+    String fieldName = 'This field',
+    AppLocalizations? l10n,
   }) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName est requis';
+      return l10n?.fieldRequired(fieldName) ?? '$fieldName is required';
     }
     return null;
   }
 
   static String? validateUsername(
     String? value, {
-    String fieldName = "Nom d'utilisateur",
+    String fieldName = 'Username',
+    AppLocalizations? l10n,
   }) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName est requis';
+      return l10n?.fieldRequired(fieldName) ?? '$fieldName is required';
     }
 
     final normalized = value.trim();
     if (normalized.length < 2) {
-      return '$fieldName doit contenir au moins 2 caracteres';
+      return l10n?.fieldMustContainAtLeast(fieldName, 2) ??
+          '$fieldName must contain at least 2 characters';
     }
 
     if (normalized.length > 100) {
-      return '$fieldName ne peut pas depasser 100 caracteres';
+      return l10n?.fieldCannotExceed(fieldName, 100) ??
+          '$fieldName cannot exceed 100 characters';
     }
 
     return null;
@@ -52,33 +58,40 @@ class Validators {
   static String? validatePassword(
     String? value, {
     bool requireStrongRules = false,
+    AppLocalizations? l10n,
   }) {
     if (value == null || value.isEmpty) {
-      return 'Veuillez entrer un mot de passe';
+      return l10n?.pleaseEnterPassword ?? 'Please enter a password';
     }
 
     if (value.length < 8) {
-      return 'Le mot de passe doit contenir au moins 8 caracteres';
+      return l10n?.passwordMustBeBetween8And100Characters ??
+          'Password must be between 8 and 100 characters long';
     }
 
     if (value.length > 100) {
-      return 'Le mot de passe ne peut pas depasser 100 caracteres';
+      return l10n?.passwordMustBeBetween8And100Characters ??
+          'Password must be between 8 and 100 characters long';
     }
 
     if (requireStrongRules && !_lowercaseRegex.hasMatch(value)) {
-      return 'Le mot de passe doit contenir au moins une minuscule';
+      return l10n?.passwordMustContainLowercase ??
+          'Password must contain at least one lowercase letter';
     }
 
     if (requireStrongRules && !_uppercaseRegex.hasMatch(value)) {
-      return 'Le mot de passe doit contenir au moins une majuscule';
+      return l10n?.passwordMustContainUppercase ??
+          'Password must contain at least one uppercase letter';
     }
 
     if (requireStrongRules && !_digitRegex.hasMatch(value)) {
-      return 'Le mot de passe doit contenir au moins un chiffre';
+      return l10n?.passwordMustContainDigit ??
+          'Password must contain at least one digit';
     }
 
     if (requireStrongRules && !_specialCharRegex.hasMatch(value)) {
-      return 'Le mot de passe doit contenir au moins un caractere special';
+      return l10n?.passwordMustContainSpecialCharacter ??
+          'Password must contain at least one special character';
     }
 
     return null;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 
 import '../../../../networking/api_service.dart';
 import '../../../../networking/routes/user_routes.dart';
@@ -140,7 +141,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _name.isNotEmpty ? 'Hello, $_name' : 'Hello',
+                      _name.isNotEmpty
+                          ? context.l10n.helloUser(_name)
+                          : context.l10n.hello,
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -155,13 +158,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         color: const Color(0xFFF5F2C1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.star, size: 16, color: Color(0xFFFFBE0A)),
                           SizedBox(width: 4),
                           Text(
-                            'Pro member',
+                            context.l10n.proMember,
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
@@ -190,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   Icon(Icons.search, color: Colors.grey[600], size: 20),
                   const SizedBox(width: 12),
                   Text(
-                    'Start a chat with DocAI',
+                    context.l10n.startChatDocAi,
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ],
@@ -416,36 +419,44 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Prises du jour',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1D1D1F),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    if (total > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '$takenCount/$total prises effectuees',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: takenCount == total
-                                ? const Color(0xFF34C759)
-                                : Colors.grey.shade500,
-                          ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.l10n.todayIntakes,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1D1D1F),
+                          letterSpacing: -0.5,
                         ),
                       ),
-                  ],
+                      if (total > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            context.l10n.todayIntakeProgress(takenCount, total),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: takenCount == total
+                                  ? const Color(0xFF34C759)
+                                  : Colors.grey.shade500,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                const SizedBox(width: 8),
+                Wrap(
+                  spacing: 0,
+                  runSpacing: 0,
                   children: [
                     TextButton.icon(
                       onPressed: () => context.push('/pillbox/history'),
@@ -457,8 +468,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                       icon: const Icon(Icons.history_rounded, size: 16),
-                      label: const Text('Historique'),
+                      label: Text(context.l10n.history),
                     ),
+                    const SizedBox(width: 4),
                     TextButton.icon(
                       onPressed: () => context.push('/pillbox'),
                       style: TextButton.styleFrom(
@@ -469,7 +481,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                       icon: const Icon(Icons.arrow_forward, size: 16),
-                      label: const Text('Voir tout'),
+                      label: Text(context.l10n.viewAll),
                     ),
                   ],
                 ),
@@ -533,8 +545,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const Icon(Icons.check_circle_outline_rounded,
               size: 40, color: Color(0xFF34C759)),
           const SizedBox(height: 10),
-          const Text(
-            'Aucune prise prevue aujourd\'hui',
+          Text(
+            context.l10n.noIntakesToday,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -543,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           const SizedBox(height: 4),
           Text(
-            'Ajoutez des medicaments avec des horaires',
+            context.l10n.addMedicationsWithSchedules,
             style: TextStyle(
               fontSize: 13,
               color: Colors.grey.shade500,
@@ -563,9 +575,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
               icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text(
-                'Ajouter un medicament',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              label: Text(
+                context.l10n.addMedication,
+                style:
+                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ),
           ),

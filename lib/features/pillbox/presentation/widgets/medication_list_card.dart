@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import '../../domain/entities/patient_medication.dart';
 
 class MedicationListCard extends StatelessWidget {
@@ -140,7 +141,7 @@ class MedicationListCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    medication.isActive ? 'Actif' : 'Inactif',
+                    medication.isActive ? context.l10n.active : context.l10n.inactive,
                     style: TextStyle(
                       color: medication.isActive
                           ? const Color(0xFF34C759)

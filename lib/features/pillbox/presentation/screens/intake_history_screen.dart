@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 import '../providers/pillbox_provider.dart';
 import '../widgets/intake_card.dart';
 
@@ -73,8 +74,8 @@ class _IntakeHistoryScreenState extends State<IntakeHistoryScreen> {
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: _dark),
               onPressed: () => context.pop(),
             ),
-            title: const Text(
-              'Historique',
+            title: Text(
+              context.l10n.history,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -394,7 +395,7 @@ class _IntakeHistoryScreenState extends State<IntakeHistoryScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  _formatSelectedDate(),
+                  _formatSelectedDate(context),
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -498,8 +499,8 @@ class _IntakeHistoryScreenState extends State<IntakeHistoryScreen> {
           const Icon(Icons.event_available_rounded,
               size: 40, color: _green),
           const SizedBox(height: 10),
-          const Text(
-            'Aucune prise ce jour',
+          Text(
+            context.l10n.noIntakesToday,
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
@@ -508,7 +509,7 @@ class _IntakeHistoryScreenState extends State<IntakeHistoryScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Pas de medicaments programmes',
+            context.l10n.noMedicationsScheduled,
             style: TextStyle(
               fontSize: 13,
               color: Colors.grey.shade500,
@@ -521,14 +522,14 @@ class _IntakeHistoryScreenState extends State<IntakeHistoryScreen> {
 
   // ── Helpers ─────────────────────────────────────────────────────────────
 
-  String _formatSelectedDate() {
+  String _formatSelectedDate(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final sel = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    if (sel == today) return "Aujourd'hui";
-    if (sel == yesterday) return 'Hier';
+    if (sel == today) return context.l10n.today;
+    if (sel == yesterday) return context.l10n.yesterday;
 
     final dayNames = [
       '', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'

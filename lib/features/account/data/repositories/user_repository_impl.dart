@@ -26,7 +26,7 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   Future<User> updateUser(String userId, Map<String, dynamic> data) async {
-    final response = await ApiService.authPut(UserRoutes.me(), data);
+    final response = await ApiService.authPatch(UserRoutes.me(), data);
 
     if (response is Map<String, dynamic>) {
       final userData = response['user'] ?? response;

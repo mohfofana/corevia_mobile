@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:corevia_mobile/l10n/app_localizations.dart';
 
 // Les écrans
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
@@ -17,6 +18,7 @@ import '../../features/onboarding/presentation/screen/onboarding_screen.dart';
 import '../../features/pillbox/presentation/screens/add_medication_screen.dart';
 import '../../features/pillbox/presentation/screens/intake_history_screen.dart';
 import '../../features/pillbox/presentation/screens/medication_detail_screen.dart';
+import '../../features/documents/presentation/screens/documents_screen.dart';
 import '../../features/pillbox/presentation/screens/pillbox_screen.dart';
 import 'route_persistence.dart';
 
@@ -134,7 +136,12 @@ GoRouter createRouter(
           GoRoute(
             path: '/calendar',
             builder: (context, state) => CalendarScreen(
-              initialTab: state.uri.queryParameters['tab'] ?? 'schedule',
+              initialTab: () {
+                final tab = (state.uri.queryParameters['tab'] ?? 'schedule').toLowerCase();
+                return (tab == 'list' || tab == 'lists')
+                    ? CalendarTab.list
+                    : CalendarTab.programme;
+              }(),
             ),
           ),
           GoRoute(
@@ -159,10 +166,10 @@ GoRouter createRouter(
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return BookingScreen(
             doctorId: extra['doctorId'] as String? ?? '',
-            doctorName: extra['doctorName'] as String? ?? 'Médecin',
+            doctorName: extra['doctorName'] as String? ?? context.l10n.doctor,
             specialty: extra['specialty'] as String? ?? '',
             imageUrl: extra['imageUrl'] as String? ?? '',
-            address: extra['address'] as String? ?? 'Adresse non renseignée',
+            address: extra['address'] as String? ?? context.l10n.notProvided,
           );
         },
       ),
@@ -172,14 +179,18 @@ GoRouter createRouter(
           final extra = state.extra as Map<String, dynamic>? ?? {};
           return BookingConfirmationScreen(
             doctorId: extra['doctorId'] as String? ?? '',
-            doctorName: extra['doctorName'] as String? ?? 'Médecin',
+            doctorName: extra['doctorName'] as String? ?? context.l10n.doctor,
             specialty: extra['specialty'] as String? ?? '',
             imageUrl: extra['imageUrl'] as String? ?? '',
-            address: extra['address'] as String? ?? 'Adresse non renseignée',
+            address: extra['address'] as String? ?? context.l10n.notProvided,
             date: extra['date'] as DateTime? ?? DateTime.now(),
             timeSlot: extra['timeSlot'] as String? ?? '',
           );
         },
+      ),
+      GoRoute(
+        path: '/documents',
+        builder: (context, state) => const DocumentsScreen(),
       ),
       GoRoute(
         path: '/pillbox',
@@ -203,7 +214,7 @@ GoRouter createRouter(
 
     errorBuilder: (context, state) => Scaffold(
       body: Center(
-        child: Text('Page not found: ${state.uri}'),
+        child: Text(context.l10n.pageNotFound(state.uri.toString())),
       ),
     ),
   );

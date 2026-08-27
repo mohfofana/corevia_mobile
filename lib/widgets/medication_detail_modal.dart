@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../l10n/app_localizations.dart';
 import './pill_shadow.dart';
 
 class MedicationDetailModal extends StatelessWidget {
@@ -45,14 +46,13 @@ class MedicationDetailModal extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // --- CONTENU DU DIALOG ---
+          // --- Contenu du dialog ---
           Container(
             margin: const EdgeInsets.only(top: 75), // laisse la place à l'image
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              //border: Border.all(color: Colors.pink.shade200, width: 2),
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -72,59 +72,73 @@ class MedicationDetailModal extends StatelessWidget {
                             Text(
                               medicationName,
                               style: const TextStyle(
-                                  fontSize: 35, fontWeight: FontWeight.bold),
+                                fontSize: 35,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('$dosage . $time',
-                                    style: TextStyle(color: Colors.black)),
+                                Text(
+                                  '$dosage . $time',
+                                  style: const TextStyle(color: Colors.black),
+                                ),
                               ],
-                            )
+                            ),
                           ],
                         ),
                       ),
-                      // IconButton(
-                      //   icon: const Icon(Icons.close),
-                      //   onPressed: () => Navigator.pop(context),
-                      // ),
                     ],
                   ),
 
                   const SizedBox(height: 24),
-
-                  _buildInfoRow(LucideIcons.repeat, 'Frequency', frequency),
+                  _buildInfoRow(
+                      LucideIcons.repeat, context.l10n.frequency, frequency),
                   const SizedBox(height: 12),
-                  _buildInfoRow(LucideIcons.calendar, 'Start', startDate),
+                  _buildInfoRow(
+                      LucideIcons.calendar, context.l10n.start, startDate),
                   const SizedBox(height: 8),
-                  _buildInfoRow(LucideIcons.calendarCheck, 'End', endDate),
+                  _buildInfoRow(
+                      LucideIcons.calendarCheck, context.l10n.end, endDate),
 
                   const SizedBox(height: 24),
-                  Text('Description',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade800,
-                          fontSize: 16)),
+                  Text(
+                    context.l10n.description,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade800,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(description,
-                      style: TextStyle(color: Colors.grey.shade700)),
+                  Text(
+                    description,
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
 
                   const SizedBox(height: 16),
-                  Text('Instructions',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade800,
-                          fontSize: 16)),
+                  Text(
+                    context.l10n.instructions,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade800,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(instructions,
-                      style: TextStyle(color: Colors.grey.shade700)),
+                  Text(
+                    instructions,
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
 
                   const SizedBox(height: 24),
                   if (_isTaken || _isSkipped)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Text(
-                        _isTaken ? 'Prise déjà effectuée' : 'Prise ignorée',
+                        _isTaken
+                            ? context.l10n.intakeAlreadyTaken(medicationName)
+                            : context.l10n.intakeSkipped(medicationName),
                         style: TextStyle(
                           color: _isTaken ? Colors.green : Colors.red,
                           fontWeight: FontWeight.w600,
@@ -135,18 +149,20 @@ class MedicationDetailModal extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(LucideIcons.check, color: Colors.white),
-                      label: const Text(
-                        'Mark as Taken',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white),
+                      label: Text(
+                        context.l10n.markAsTaken,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF34C759),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: () {
                         Navigator.pop(context);
@@ -156,7 +172,8 @@ class MedicationDetailModal extends StatelessWidget {
                         }
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('$medicationName marked as taken!'),
+                            content: Text(
+                                context.l10n.markedAsTaken(medicationName)),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -175,7 +192,8 @@ class MedicationDetailModal extends StatelessWidget {
                         }
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('$medicationName skipped'),
+                            content: Text(
+                                context.l10n.skippedMedication(medicationName)),
                             backgroundColor: Colors.orange,
                           ),
                         );
@@ -187,7 +205,7 @@ class MedicationDetailModal extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Skip'),
+                      child: Text(context.l10n.skip),
                     ),
                   ),
                 ],
@@ -195,7 +213,7 @@ class MedicationDetailModal extends StatelessWidget {
             ),
           ),
 
-          // --- IMAGE CENTRÉE SUR LA BORDURE DU HAUT ---
+          // --- Image centrée sur la bordure du haut ---
           Positioned(
             top: 0,
             left: 0,
